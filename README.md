@@ -1,3 +1,9 @@
+# install
+
+```sh
+pnpm i @capacitor-community/electron@npm:@shynome/capacitorjs-electron@latest
+```
+
 <p align="center">
   <img src="https://user-images.githubusercontent.com/20338451/124627505-9cd53a80-de4d-11eb-8d74-f81685804b05.png" width="835" height="168" /><br />
 </p>
