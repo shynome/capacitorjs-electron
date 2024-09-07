@@ -25,6 +25,28 @@ export async function doUpdate(taskInfoMessageProvider: TaskInfoProvider): Promi
 
   // get all cap plugins installed
   const plugins = await getPlugins(userProjectPackageJsonPath);
+  // const installedPlugins = {};
+  const installedPlugins = (await getPlugins(join(usersProjectDir, 'electron', 'package.json'), true))
+    .filter((plugin: Plugin | null): plugin is Plugin => plugin !== null)
+    .reduce((target, plugin) => {
+      const installStr: string = (() => {
+        // Consider cases when package is not installed via npm
+        if (deps[plugin?.id]) {
+          if (deps[plugin.id].startsWith('file:')) {
+            const pkgPath = deps[plugin?.id].replace(/^file:/, '');
+            const pkgAbsPath = isAbsolute(pkgPath) ? pkgPath : resolve(usersProjectDir, pkgPath);
+
+            return relative(join(usersProjectDir, 'electron'), pkgAbsPath); // try to use relative path as much as possible
+          } else if (deps[plugin.id].match(/^(https?|git):/)) {
+            return deps[plugin.id];
+          }
+        }
+
+        return `${plugin?.id}@${plugin?.version}`;
+      })();
+      target[installStr] = true;
+      return target;
+    }, {} as { [installStr: string]: boolean });
   //console.log('\n\n');
   //console.log(plugins);
   //console.log('\n');
@@ -73,7 +95,9 @@ export async function doUpdate(taskInfoMessageProvider: TaskInfoProvider): Promi
 
   let outStr = `/* eslint-disable @typescript-eslint/no-var-requires */\n`;
   for (const electronPlugin of pluginMap) {
-    npmIStr += ` ${electronPlugin.installStr}`;
+    if (!installedPlugins[electronPlugin.installStr]) {
+      npmIStr += ` ${electronPlugin.installStr}`;
+    }
     const tmpPath = join(
       relative(capacitorElectronRuntimeFilePath, usersProjectDir),
       'node_modules',

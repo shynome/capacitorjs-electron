@@ -74,12 +74,12 @@ interface PackageJson {
   readonly devDependencies?: { readonly [key: string]: string | undefined };
 }
 
-export async function getPlugins(packageJsonPath: string): Promise<(Plugin | null)[]> {
+export async function getPlugins(packageJsonPath: string, disableLog?: boolean): Promise<(Plugin | null)[]> {
   const packageJson: PackageJson = (await readJSON(packageJsonPath)) as PackageJson;
   //console.log(packageJson);
   const possiblePlugins = getDependencies(packageJson);
   //console.log(possiblePlugins);
-  const resolvedPlugins = await Promise.all(possiblePlugins.map(async (p) => resolvePlugin(p)));
+  const resolvedPlugins = await Promise.all(possiblePlugins.map(async (p) => resolvePlugin(p, disableLog)));
 
   return resolvedPlugins.filter((p) => !!p);
 }
@@ -88,15 +88,17 @@ export function getDependencies(packageJson: PackageJson): string[] {
   return [...Object.keys(packageJson.dependencies ?? {}), ...Object.keys(packageJson.devDependencies ?? {})];
 }
 
-export async function resolvePlugin(name: string): Promise<Plugin | null> {
+export async function resolvePlugin(name: string, disableLog?: boolean): Promise<Plugin | null> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const usersProjectDir = process.env.CAPACITOR_ROOT_DIR!;
     const packagePath = resolveNode(usersProjectDir, name, 'package.json');
     if (!packagePath) {
-      console.error(
-        `\nUnable to find ${chalk.bold(`node_modules/${name}`)}.\n` + `Are you sure ${chalk.bold(name)} is installed?`
-      );
+      if (!disableLog) {
+        console.error(
+          `\nUnable to find ${chalk.bold(`node_modules/${name}`)}.\n` + `Are you sure ${chalk.bold(name)} is installed?`
+        );
+      }
       return null;
     }
 
