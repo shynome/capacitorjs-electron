@@ -113,6 +113,10 @@ export async function doUpdate(taskInfoMessageProvider: TaskInfoProvider): Promi
   if (npmIStr.length > 0) {
     taskInfoMessageProvider('installing electron plugin files');
     console.log(`\n\nWill install:${npmIStr}\n\n`);
-    await runExec(`cd ${join(usersProjectDir, 'electron')} && npm i${npmIStr}`);
+    let npm = 'npm';
+    if (existsSync(join(usersProjectDir, 'pnpm-lock.yaml'))) {
+      npm = 'pnpm';
+    }
+    await runExec(`cd ${join(usersProjectDir, 'electron')} && ${npm} i${npmIStr}`);
   }
 }
